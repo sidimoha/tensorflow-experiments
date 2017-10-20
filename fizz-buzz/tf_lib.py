@@ -1,7 +1,6 @@
 # tf-lib.py
 import numpy as np
 import tensorflow as tf
-from collections import deque
 
 
 def init_weights(shape):
@@ -18,9 +17,12 @@ def binary_encode(i, num_digits):
     return np.array([i >> d & 1 for d in range(num_digits)])
 
 
-def create_prediction_model(input_layer, input_size, output_size, hidden_num, hidden_size, activation_func=tf.nn.relu):
+def create_prediction_model(input_layer, input_size, output_size, hidden_num,
+                            hidden_size, activation_func=tf.nn.relu):
     """
-    a
+    Create a prediction model from the imput layer, input/output size,
+    hidden layer num/size and an optional activation function (default
+    is tensorflow.nn.relu)
     """
     weight_input = init_weights([input_size, hidden_size])
     weight_output = init_weights([hidden_size, output_size])

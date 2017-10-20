@@ -87,8 +87,9 @@ predict_y_given_x = create_prediction_model(
 
 # We'll train our model by minimizing a cost function.
 # cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(py_x, Y))
-cost = tf.reduce_mean(
-    tf.nn.softmax_cross_entropy_with_logits(logits=predict_y_given_x, labels=Y))
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+    logits=predict_y_given_x,
+    labels=Y))
 train_op = tf.train.GradientDescentOptimizer(0.05).minimize(cost)
 
 # And we'll make predictions by choosing the largest output.
@@ -124,5 +125,6 @@ with tf.Session() as sess:
     print("result:")
     for index, (expected, actual) in enumerate(zip(EXPECTED_OUTPUT, output)):
         # print(index, "expected:", expected, "actual:", actual)
-        print("integer: {0: >4} {1: <6} {2: <9} {3: <8} {4: <9} {5: <8}".format(
-            index + 1, "  OK  " if expected == actual else " FAIL ", "expected:", expected, "actual:", actual))
+        print("integer: {0: >4} {1: <6} {2: <9} {3: <8} {4: <9} {5: <8}"
+              .format(index + 1, "  OK  " if expected == actual else " FAIL ",
+                      "expected:", expected, "actual:", actual))
