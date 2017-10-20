@@ -3,15 +3,7 @@
 
 import numpy as np
 import tensorflow as tf
-
-NUM_DIGITS = 10
-
-
-def binary_encode(i, num_digits):
-    """
-    Represent each input by an array of its binary digits.
-    """
-    return np.array([i >> d & 1 for d in range(num_digits)])
+from tf_lib import *
 
 
 def fizz_buzz_encode(i):
@@ -28,28 +20,12 @@ def fizz_buzz_encode(i):
         return np.array([1, 0, 0, 0])
 
 
-def init_weights(shape):
-    """
-    Initialize the weight in a random fashion
-    """
-    return tf.Variable(tf.random_normal(shape, stddev=0.01))
-
-
 def fizz_buzz(i, prediction):
     """
     turn a prediction (and an original number)
     into a fizz buzz output
     """
     return [str(i), "fizz", "buzz", "fizzbuzz"][prediction]
-
-
-def model(input_layer, w_h, w_i, w_o):
-    """
-    Create the Neural Network with 2 hidden layer (perceptron style) with ReLU activation function
-    """
-    h = tf.nn.relu(tf.matmul(input_layer, w_h))
-    h_i = tf.nn.relu(tf.matmul(h, w_i))
-    return tf.matmul(h_i, w_o)
 
 
 def fizz_buzz_expected_answer(i):
@@ -66,6 +42,15 @@ def fizz_buzz_expected_answer(i):
         return str(i)
 
 
+SIZE_INPUT_LAYER = 10
+SIZE_OUTPUT_LAYER = 4
+SIZE_HIDDEN_LAYERS = 100
+NUM_HIDDEN_LAYERS = 2
+TRAINING_BATCH_SIZE = 128
+# 6500 with 1 hidden layer
+# 3000 with 2 hidden layers
+TRAINING_ITERATIONS = 3000
+
 EXPECTED_OUTPUT = [
     fizz_buzz_expected_answer(i) for i in range(1, 101)]
 
@@ -73,38 +58,39 @@ EXPECTED_OUTPUT = [
 # Our goal is to produce fizzbuzz for the numbers 1 to 100. So it would be
 # unfair to include these in our training data. Accordingly, the training data
 # corresponds to the numbers 101 to (2 ** NUM_DIGITS - 1).
-trX = np.array([binary_encode(i, NUM_DIGITS)
-                for i in range(1, 2 ** NUM_DIGITS)])
-trY = np.array([fizz_buzz_encode(i) for i in range(1, 2 ** NUM_DIGITS)])
+trX = np.array([binary_encode(i, SIZE_INPUT_LAYER)
+                for i in range(1, 2 ** SIZE_INPUT_LAYER)])
+trY = np.array([fizz_buzz_encode(i) for i in range(1, 2 ** SIZE_INPUT_LAYER)])
 
 # Our variables. The input has width NUM_DIGITS, and the output has width 4.
-X = tf.placeholder("float", [None, NUM_DIGITS])
-Y = tf.placeholder("float", [None, 4])
+X = tf.placeholder("float", [None, SIZE_INPUT_LAYER])
+Y = tf.placeholder("float", [None, SIZE_OUTPUT_LAYER])
 
-# How many units in the hidden layer.
-NUM_HIDDEN = 100
 
 # Initialize the weights.
-w_h = init_weights([NUM_DIGITS, NUM_HIDDEN])
-w_i = init_weights([NUM_HIDDEN, NUM_HIDDEN])
-w_o = init_weights([NUM_HIDDEN, 4])
+w_h = init_weights([SIZE_INPUT_LAYER, SIZE_HIDDEN_LAYERS])
+w_i = init_weights([SIZE_HIDDEN_LAYERS, SIZE_HIDDEN_LAYERS])
+w_o = init_weights([SIZE_HIDDEN_LAYERS, SIZE_OUTPUT_LAYER])
 
 # Predict y given x using the model.
-py_x = model(X, w_h, w_i, w_o)
+# predict_y_given_x = model(X, w_h, w_i, w_o)
+predict_y_given_x = create_prediction_model(
+    input_layer=X,
+    input_size=SIZE_INPUT_LAYER,
+    output_size=SIZE_OUTPUT_LAYER,
+    hidden_num=NUM_HIDDEN_LAYERS,
+    hidden_size=SIZE_HIDDEN_LAYERS)
+
+# X, NUM_DIGITS, 4, 2, NUM_HIDDEN)
 
 # We'll train our model by minimizing a cost function.
 # cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(py_x, Y))
 cost = tf.reduce_mean(
-    tf.nn.softmax_cross_entropy_with_logits(logits=py_x, labels=Y))
+    tf.nn.softmax_cross_entropy_with_logits(logits=predict_y_given_x, labels=Y))
 train_op = tf.train.GradientDescentOptimizer(0.05).minimize(cost)
 
 # And we'll make predictions by choosing the largest output.
-predict_op = tf.argmax(py_x, 1)
-
-BATCH_SIZE = 128
-# 6500 with 1 hidden layer
-# 3000 with 2 hidden layers
-TRAINING_ITERATIONS = 3000
+predict_op = tf.argmax(predict_y_given_x, 1)
 
 # Launch the graph in a session
 with tf.Session() as sess:
@@ -116,27 +102,24 @@ with tf.Session() as sess:
         p = np.random.permutation(range(len(trX)))
         trX, trY = trX[p], trY[p]
 
-        # Train in batches of 128 inputs.
-        for start in range(0, len(trX), BATCH_SIZE):
-            end = start + BATCH_SIZE
+        # Train in batches of TRAINING_BATCH_SIZE inputs.
+        for start in range(0, len(trX), TRAINING_BATCH_SIZE):
+            end = start + TRAINING_BATCH_SIZE
             sess.run(train_op, feed_dict={
                      X: trX[start:end], Y: trY[start:end]})
 
         # And print the current accuracy on the training data.
-        # print(epoch, np.mean(np.argmax(trY, axis=1) ==
-        #                      sess.run(predict_op, feed_dict={X: trX, Y: trY})))
+        print(epoch, np.mean(np.argmax(trY, axis=1) ==
+                             sess.run(predict_op, feed_dict={X: trX, Y: trY})))
 
     # And now for some fizz buzz
     numbers = np.arange(1, 1001)
-    teX = np.transpose(binary_encode(numbers, NUM_DIGITS))
+    teX = np.transpose(binary_encode(numbers, SIZE_INPUT_LAYER))
     teY = sess.run(predict_op, feed_dict={X: teX})
     output = np.vectorize(fizz_buzz)(numbers, teY)
 
     print("result:")
     for index, (expected, actual) in enumerate(zip(EXPECTED_OUTPUT, output)):
         # print(index, "expected:", expected, "actual:", actual)
-        if expected != actual:
-            print("integer: {0: >4} {1: <6} {2: <9} {3: <8} {4: <9} {5: <8}".format(
-                index + 1, "  OK  " if expected == actual else " FAIL ", "expected:", expected, "actual:", actual))
-    else:
-        print("All OK")
+        print("integer: {0: >4} {1: <6} {2: <9} {3: <8} {4: <9} {5: <8}".format(
+            index + 1, "  OK  " if expected == actual else " FAIL ", "expected:", expected, "actual:", actual))
