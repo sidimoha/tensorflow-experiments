@@ -43,6 +43,7 @@ def fizz_buzz_expected_answer(i):
 
 
 SIZE_INPUT_LAYER = 10
+MAX_INPUT_VALUE = (2 ** (SIZE_INPUT_LAYER + 1)) - 1
 SIZE_OUTPUT_LAYER = 4
 SIZE_HIDDEN_LAYERS = 300
 NUM_HIDDEN_LAYERS = 1
@@ -60,13 +61,24 @@ ACTIVATION_FUNCTION = tf.nn.relu
 EXPECTED_OUTPUT = [
     fizz_buzz_expected_answer(i) for i in range(1, 101)]
 
+# We print the session parameters
+print("Session parameters:\n")
+print("\tSIZE_INPUT_LAYER\t:", SIZE_INPUT_LAYER)
+print("\tMAX_INPUT_VALUE\t\t:", MAX_INPUT_VALUE)
+print("\tSIZE_OUTPUT_LAYER\t:", SIZE_OUTPUT_LAYER)
+print("\tSIZE_HIDDEN_LAYERS\t:", SIZE_HIDDEN_LAYERS)
+print("\tNUM_HIDDEN_LAYERS\t:", NUM_HIDDEN_LAYERS)
+print("\tTRAINING_BATCH_SIZE\t:", TRAINING_BATCH_SIZE)
+print("\tTRAINING_ITERATIONS\t:", TRAINING_ITERATIONS)
+print("\tACTIVATION_FUNCTION\t:",
+      ACTIVATION_FUNCTION.__module__ + "." + ACTIVATION_FUNCTION.__name__)
 
 # Our goal is to produce fizzbuzz for the numbers 1 to 100. So it would be
 # unfair to include these in our training data. Accordingly, the training data
 # corresponds to the numbers 101 to (2 ** NUM_DIGITS - 1).
 trX = np.array([binary_encode(i, SIZE_INPUT_LAYER)
                 for i in range(1, 2 ** SIZE_INPUT_LAYER)])
-trY = np.array([fizz_buzz_encode(i) for i in range(1, 2 ** SIZE_INPUT_LAYER)])
+trY = np.array([fizz_buzz_encode(i) for i in range(1, MAX_INPUT_VALUE)])
 
 # Our variables. The input has width NUM_DIGITS, and the output has width 4.
 X = tf.placeholder("float", [None, SIZE_INPUT_LAYER])
@@ -100,7 +112,9 @@ with tf.Session() as sess:
     # tf.initialize_all_variables().run()
     sess.run(tf.global_variables_initializer())
 
-    for epoch in range(TRAINING_ITERATIONS):
+    print("\n\nAccuracy on the training data (chunk of 100):\n")
+
+    for epoch in range(TRAINING_ITERATIONS + 1):
         # Shuffle the data before each training iteration.
         p = np.random.permutation(range(len(trX)))
         trX, trY = trX[p], trY[p]
@@ -113,8 +127,13 @@ with tf.Session() as sess:
                 feed_dict={X: trX[start:end], Y: trY[start:end]})
 
         # And print the current accuracy on the training data.
-        print(epoch, np.mean(np.argmax(trY, axis=1) ==
-                             sess.run(predict_op, feed_dict={X: trX, Y: trY})))
+        if epoch % 100 == 0:
+            print("\t{0: >4}: {1: <3.2f}%".format(
+                epoch,
+                np.mean(
+                    np.argmax(trY, axis=1) == sess.run(
+                        predict_op,
+                        feed_dict={X: trX, Y: trY})) * 100))
 
     # And now for some fizz buzz
     numbers = np.arange(1, 1001)
@@ -122,9 +141,9 @@ with tf.Session() as sess:
     teY = sess.run(predict_op, feed_dict={X: teX})
     output = np.vectorize(fizz_buzz)(numbers, teY)
 
-    print("result:")
+    print("\n\nResults:\n")
     for index, (expected, actual) in enumerate(zip(EXPECTED_OUTPUT, output)):
         # print(index, "expected:", expected, "actual:", actual)
-        print("integer: {0: >4} {1: <6} {2: <9} {3: <8} {4: <9} {5: <8}"
+        print("{0: >8} {1: <6} {2: <9} {3: <8} {4: <9} {5: <8}"
               .format(index + 1, "  OK  " if expected == actual else " FAIL ",
                       "expected:", expected, "actual:", actual))
