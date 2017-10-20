@@ -44,12 +44,18 @@ def fizz_buzz_expected_answer(i):
 
 SIZE_INPUT_LAYER = 10
 SIZE_OUTPUT_LAYER = 4
-SIZE_HIDDEN_LAYERS = 100
-NUM_HIDDEN_LAYERS = 2
+SIZE_HIDDEN_LAYERS = 300
+NUM_HIDDEN_LAYERS = 1
 TRAINING_BATCH_SIZE = 128
-# 6500 with 1 hidden layer
-# 3000 with 2 hidden layers
-TRAINING_ITERATIONS = 3000
+
+# ITER | SIZE_HL | NUM_HL
+# 6500 | 1       | 100
+# 3000 | 2       | 100
+# 1800 | 1       | 200
+# 1500 | 1       | 300
+TRAINING_ITERATIONS = 1500
+
+ACTIVATION_FUNCTION = tf.nn.relu
 
 EXPECTED_OUTPUT = [
     fizz_buzz_expected_answer(i) for i in range(1, 101)]
@@ -67,11 +73,6 @@ X = tf.placeholder("float", [None, SIZE_INPUT_LAYER])
 Y = tf.placeholder("float", [None, SIZE_OUTPUT_LAYER])
 
 
-# Initialize the weights.
-w_h = init_weights([SIZE_INPUT_LAYER, SIZE_HIDDEN_LAYERS])
-w_i = init_weights([SIZE_HIDDEN_LAYERS, SIZE_HIDDEN_LAYERS])
-w_o = init_weights([SIZE_HIDDEN_LAYERS, SIZE_OUTPUT_LAYER])
-
 # Predict y given x using the model.
 # predict_y_given_x = model(X, w_h, w_i, w_o)
 predict_y_given_x = create_prediction_model(
@@ -79,7 +80,8 @@ predict_y_given_x = create_prediction_model(
     input_size=SIZE_INPUT_LAYER,
     output_size=SIZE_OUTPUT_LAYER,
     hidden_num=NUM_HIDDEN_LAYERS,
-    hidden_size=SIZE_HIDDEN_LAYERS)
+    hidden_size=SIZE_HIDDEN_LAYERS,
+    activation_func=ACTIVATION_FUNCTION)
 
 # X, NUM_DIGITS, 4, 2, NUM_HIDDEN)
 
@@ -105,8 +107,9 @@ with tf.Session() as sess:
         # Train in batches of TRAINING_BATCH_SIZE inputs.
         for start in range(0, len(trX), TRAINING_BATCH_SIZE):
             end = start + TRAINING_BATCH_SIZE
-            sess.run(train_op, feed_dict={
-                     X: trX[start:end], Y: trY[start:end]})
+            sess.run(
+                train_op,
+                feed_dict={X: trX[start:end], Y: trY[start:end]})
 
         # And print the current accuracy on the training data.
         print(epoch, np.mean(np.argmax(trY, axis=1) ==

@@ -18,7 +18,7 @@ def binary_encode(i, num_digits):
     return np.array([i >> d & 1 for d in range(num_digits)])
 
 
-def create_prediction_model(input_layer, input_size, output_size, hidden_num, hidden_size):
+def create_prediction_model(input_layer, input_size, output_size, hidden_num, hidden_size, activation_func=tf.nn.relu):
     """
     a
     """
@@ -30,8 +30,8 @@ def create_prediction_model(input_layer, input_size, output_size, hidden_num, hi
     for _ in range(0, hidden_num):
         weights_hidden.append(init_weights([hidden_size, hidden_size]))
 
-    model = tf.nn.relu(tf.matmul(input_layer, weight_input))
+    model = activation_func(tf.matmul(input_layer, weight_input))
     for weight in weights_hidden:
-        model = tf.nn.relu(tf.matmul(model, weight))
+        model = activation_func(tf.matmul(model, weight))
 
     return tf.matmul(model, weight_output)
