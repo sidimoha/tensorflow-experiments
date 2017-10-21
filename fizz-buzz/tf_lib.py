@@ -1,13 +1,14 @@
 # tf-lib.py
 import numpy as np
 import tensorflow as tf
+from random import randint
 
 
 def init_weights(shape):
     """
     Initialize the weight in a random fashion
     """
-    return tf.Variable(tf.random_normal(shape, stddev=0.01))
+    return tf.Variable(tf.random_normal(shape, stddev=0.001))
 
 
 def binary_encode(i, num_digits):
@@ -37,3 +38,46 @@ def create_prediction_model(input_layer, input_size, output_size, hidden_num,
         model = activation_func(tf.matmul(model, weight))
 
     return tf.matmul(model, weight_output)
+
+
+def create_training_sets(size_input_layer, max_input_value,
+                         training_fraction, encoding_function):
+    """
+    Creates a input training set, output training set and
+    the selected number for these sets
+    """
+    selected_numbers = set()
+    if training_fraction > 1:
+        training_fraction = 1.0 / training_fraction
+
+    while len(selected_numbers) < max_input_value * training_fraction:
+        selected_numbers.add(randint(1, max_input_value))
+
+    train_x = np.array([binary_encode(i, size_input_layer)
+                        for i in selected_numbers])
+    train_y = np.array([encoding_function(i) for i in selected_numbers])
+
+    return train_x, train_y, selected_numbers
+
+
+def create_training_sets_2(size_input_layer, max_input_value,
+                           training_fraction, encoding_function):
+    """
+    Creates a input training set, output training set and
+    the selected number for these sets
+    """
+    selected_numbers = set()
+    if training_fraction > 1:
+        training_fraction = 1.0 / training_fraction
+
+    while len(selected_numbers) < max_input_value * training_fraction:
+        selected_numbers.add(randint(1, max_input_value))
+
+    # half = int(max_input_value / 2)
+    half = int(len(selected_numbers) / 2)
+    l = list(selected_numbers)[0:half]
+
+    train_x = np.array([binary_encode(i, size_input_layer) for i in l])
+    train_y = np.array([encoding_function(i) for i in selected_numbers])
+
+    return train_x, train_y, selected_numbers
