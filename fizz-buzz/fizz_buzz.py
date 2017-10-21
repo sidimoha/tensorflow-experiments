@@ -1,5 +1,5 @@
 # Fizz Buzz in Tensorflow!
-# see http://joelgrus.com/2016/05/23/fizz-buzz-in-tensorflow/
+# largely inspired by http://joelgrus.com/2016/05/23/fizz-buzz-in-tensorflow/
 
 import numpy as np
 import tensorflow as tf
@@ -30,7 +30,7 @@ def fizz_buzz(i, prediction):
 
 def fizz_buzz_expected_answer(i):
     """
-    Generate the correct fizz-buzz answer for an int
+    Generate the correct fizz-buzz answer for an integer
     """
     if i % 15 == 0:
         return "fizzbuzz"
@@ -86,7 +86,6 @@ Y = tf.placeholder("float", [None, SIZE_OUTPUT_LAYER])
 
 
 # Predict y given x using the model.
-# predict_y_given_x = model(X, w_h, w_i, w_o)
 predict_y_given_x = create_prediction_model(
     input_layer=X,
     input_size=SIZE_INPUT_LAYER,
@@ -98,7 +97,6 @@ predict_y_given_x = create_prediction_model(
 # X, NUM_DIGITS, 4, 2, NUM_HIDDEN)
 
 # We'll train our model by minimizing a cost function.
-# cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(py_x, Y))
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
     logits=predict_y_given_x,
     labels=Y))
@@ -109,7 +107,6 @@ predict_op = tf.argmax(predict_y_given_x, 1)
 
 # Launch the graph in a session
 with tf.Session() as sess:
-    # tf.initialize_all_variables().run()
     sess.run(tf.global_variables_initializer())
 
     print("\n\nAccuracy on the training data (chunk of 100):\n")
