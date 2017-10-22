@@ -48,12 +48,12 @@ def fizz_buzz_expected_answer(i):
 
 SIZE_INPUT_LAYER = 10
 MAX_INPUT_VALUE = (2 ** (SIZE_INPUT_LAYER + 1)) - 1
-TRAINING_RATIO = 1.0 / 2.0
+TRAINING_RATIO = 3.0 / 5.0
 SIZE_OUTPUT_LAYER = 4
 SIZE_HIDDEN_LAYERS = 300
 NUM_HIDDEN_LAYERS = 1
 TRAINING_BATCH_SIZE = 128
-TRAINING_ITERATIONS = 10000
+TRAINING_ITERATIONS = 7000
 
 ACTIVATION_FUNCTION = tf.nn.relu
 
@@ -155,17 +155,7 @@ with tf.Session() as sess:
     print("\tElapsed time : %d sec" % process_time)
 
     print("\n\nResults:\n")
-    errors = 0
-    total = 0
-    for index, (expected, actual) in enumerate(zip(EXPECTED_OUTPUT, output)):
-        errors += 1 if expected != actual else 0
-        total += 1
-        print("{0: >8}   contained in training: {1: <7}   test passes: {2: <5}   expected: {3: <8}    actual: {4: <8}"
-              .format(index + 1,
-                      "TRUE" if (index + 1) in selected_numbers else "FALSE",
-                      "OK" if expected == actual else "FAIL",
-                      expected,
-                      actual))
+    total, errors = print_results(EXPECTED_OUTPUT, output, selected_numbers)
 
     error_rate = (errors * 100.0) / total
-print("\n\nError rate: %2.2f" % error_rate, "%\n")
+    print("\n\nError rate: %2.2f" % error_rate, "%\n")
