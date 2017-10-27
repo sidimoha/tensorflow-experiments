@@ -18,7 +18,7 @@ def init_weights(shape):
     """
     Initialize the weight in a random fashion
     """
-    return tf.Variable(tf.random_normal(shape, stddev=0.001))
+    return tf.Variable(tf.random_normal(shape, stddev=0.1))
 
 
 def binary_encode(i, num_digits):

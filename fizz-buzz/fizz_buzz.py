@@ -53,7 +53,8 @@ SIZE_OUTPUT_LAYER = 4
 SIZE_HIDDEN_LAYERS = 300
 NUM_HIDDEN_LAYERS = 1
 TRAINING_BATCH_SIZE = 128
-TRAINING_ITERATIONS = 7000
+TRAINING_ITERATIONS = 10000
+LEARNING_RATE = 0.003
 
 ACTIVATION_FUNCTION = tf.nn.relu
 
@@ -70,6 +71,7 @@ print("\tSIZE_HIDDEN_LAYERS\t:", SIZE_HIDDEN_LAYERS)
 print("\tNUM_HIDDEN_LAYERS\t:", NUM_HIDDEN_LAYERS)
 print("\tTRAINING_BATCH_SIZE\t:", TRAINING_BATCH_SIZE)
 print("\tTRAINING_ITERATIONS\t:", TRAINING_ITERATIONS)
+print("\LEARNING_RATE\t:", LEARNING_RATE)
 print("\tACTIVATION_FUNCTION\t:",
       ACTIVATION_FUNCTION.__module__ + "." + ACTIVATION_FUNCTION.__name__)
 
@@ -108,7 +110,7 @@ predict_y_given_x = create_prediction_model(
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
     logits=predict_y_given_x,
     labels=Y))
-train_op = tf.train.GradientDescentOptimizer(0.05).minimize(cost)
+train_op = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(cost)
 
 # And we'll make predictions by choosing the largest output.
 predict_op = tf.argmax(predict_y_given_x, 1)
