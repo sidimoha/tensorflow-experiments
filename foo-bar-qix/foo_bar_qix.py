@@ -1,21 +1,24 @@
 # foo_bar_qix.py
 # Started from https://github.com/hans/ipython-notebooks/blob/master/tf/TF%20tutorial.ipynb
 
+import tempfile
+import os
+import glob
 import numpy as np
 from tensorflow.contrib import legacy_seq2seq  # , seq2seq
 import tensorflow as tf
-import tempfile
+
 
 # Sequence auto-encoder
 
-write_log = False
+write_log = True #False
 
 use_lstm = False
-seq_length = 5
-batch_size = 64
+seq_length = 5  # 5
+batch_size = 64  # 64
 vocab_size = 7
 embedding_dim = 50
-memory_dim = 100
+memory_dim = 300
 
 
 def single_cell():
@@ -83,7 +86,10 @@ with tf.Session() as sess:
     train_op = optimizer.minimize(loss)
 
     if write_log:
-        logdir = tempfile.mkdtemp()
+        logdir = "/tmp/foo"
+        for fl in glob.glob(logdir + "/*"):
+            os.remove(fl)
+        #tempfile.mkdtemp()
         print("logdir:", logdir)
         summary_writer = tf.summary.FileWriter(logdir, sess.graph)
         # train.SummaryWriter(logdir, sess.graph_def)
