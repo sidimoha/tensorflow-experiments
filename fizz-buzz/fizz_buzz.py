@@ -1,10 +1,13 @@
 # Fizz Buzz in Tensorflow!
 # largely inspired by http://joelgrus.com/2016/05/23/fizz-buzz-in-tensorflow/
 
-import numpy as np
-import tensorflow as tf
+import os
+import glob
 from tf_lib import *
 import time
+import numpy as np
+import tensorflow as tf
+
 
 start_perf_counter = time.perf_counter()
 start_process_time = time.process_time()
@@ -55,6 +58,7 @@ NUM_HIDDEN_LAYERS = 1
 TRAINING_BATCH_SIZE = 128
 TRAINING_ITERATIONS = 10000
 LEARNING_RATE = 0.003
+write_log = True
 
 ACTIVATION_FUNCTION = tf.nn.relu
 
@@ -110,30 +114,53 @@ predict_y_given_x = create_prediction_model(
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
     logits=predict_y_given_x,
     labels=Y))
+
+tf.summary.scalar("loss", cost)
+
 train_op = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(cost)
 
 # And we'll make predictions by choosing the largest output.
 predict_op = tf.argmax(predict_y_given_x, 1)
 
+summary_op = tf.summary.merge_all()
+print("all summaries:", summary_op)
+
 # Launch the graph in a session
 with tf.Session() as sess:
+
+    if write_log:
+        logdir = "/tmp/fizz"
+        for fl in glob.glob(logdir + "/*"):
+            os.remove(fl)
+        print("logdir:", logdir)
+        summary_writer = tf.summary.FileWriter(logdir, sess.graph)
+
     sess.run(tf.global_variables_initializer())
 
     CHUNK = (TRAINING_ITERATIONS) / 20
     print("\n\nAccuracy on the training data (log every %s iterations):\n"
           % CHUNK)
 
+    # Train in batches of TRAINING_BATCH_SIZE inputs.
+    def train_batch(batch_size):
+        # Train in batches of batch_size inputs.
+        for start in range(0, len(trX), batch_size):
+            end = start + batch_size
+            _, loss_t, summary = sess.run(
+                [train_op, cost, summary_op],
+                feed_dict={X: trX[start:end], Y: trY[start:end]})
+        return loss_t, summary
+
     for epoch in range(TRAINING_ITERATIONS + 1):
         # Shuffle the data before each training iteration.
         p = np.random.permutation(range(len(trX)))
         trX, trY = trX[p], trY[p]
 
-        # Train in batches of TRAINING_BATCH_SIZE inputs.
-        for start in range(0, len(trX), TRAINING_BATCH_SIZE):
-            end = start + TRAINING_BATCH_SIZE
-            sess.run(
-                train_op,
-                feed_dict={X: trX[start:end], Y: trY[start:end]})
+        loss_t, summary = train_batch(TRAINING_BATCH_SIZE)
+
+        # We write the training data for the current step (epoch)
+        if write_log:
+            summary_writer.add_summary(summary, epoch)
 
         # And print the current accuracy on the training data.
         if epoch % CHUNK == 0 or epoch == TRAINING_ITERATIONS:
@@ -143,6 +170,9 @@ with tf.Session() as sess:
                     np.argmax(trY, axis=1) == sess.run(
                         predict_op,
                         feed_dict={X: trX, Y: trY})) * 100))
+
+    if write_log:
+        summary_writer.flush()
 
     # And now for some fizz buzz
     numbers = np.arange(1, 1001)

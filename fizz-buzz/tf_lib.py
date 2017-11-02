@@ -104,7 +104,8 @@ def print_results(exp_output, actual_output, selected_numbers):
         errors += 1 if expected != actual else 0
         total += 1
         actual_color = AC_COLOR if expected == actual else KO_COLOR
-        test_text = OK_COLOR + "OK" + RT_COLOR if expected == actual else KO_COLOR + "FAIL" + RT_COLOR
+        test_text = OK_COLOR + "OK" + \
+            RT_COLOR if expected == actual else KO_COLOR + "FAIL" + RT_COLOR
         print("{0: >7}    contained in training: {1: <17}   test passes: {2: <17}   expected: {3: <17}    actual: {4: <12}"
               .format(index + 1,
                       OK_COLOR + "TRUE" +
